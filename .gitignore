@@ -1,0 +1,15 @@
+node_modules
+coverage
+.DS_Store
+*.log
+.changelog
+packages/*/dist
+
+## vuepress publish directory
+docs/.vuepress/dist/
+
+**/.nuxt/
+
+# editor
+.idea
+.vscode

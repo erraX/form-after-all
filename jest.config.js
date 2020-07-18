@@ -7,5 +7,5 @@ module.exports = {
     '^.+\\.(tsx?|jsx?)$': 'babel-jest',
     '.*\\.(vue)$': 'vue-jest',
   },
-  setupFiles: ['<rootDir>/jest.setup.js'],
+  setupFiles: ['<rootDir>/tests/jest.setup.js'],
 };

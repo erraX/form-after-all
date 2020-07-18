@@ -41,8 +41,7 @@ const pathToKeys = (path: string) =>
     })
     .flat();
 
-// eslint-disable-next-line import/prefer-default-export
-export const $set = (obj: any, path: string, value: any) => {
+export const $set = (obj: { [key: string]: any }, path: string, value: any) => {
   const keys = pathToKeys(path);
   const lastIndex = keys.length - 1;
   keys.reduce((parent, key, index) => {
@@ -68,10 +67,9 @@ export const $set = (obj: any, path: string, value: any) => {
   return obj;
 };
 
-export const $delete = (obj: any, path: string) => {
+export const $delete = (obj: { [key: string]: any }, path: string) => {
   const keys = pathToKeys(path);
   const lastIndex = keys.length - 1;
-  /* eslint array-callback-return: ["error", { allowImplicit: true }]*/
   keys.reduce((parent, key, index) => {
     if (parent === undefined) {
       return undefined;

@@ -5,10 +5,12 @@ coverage
 .changelog
 packages/*/dist
 
-## vuepress publish directory
-docs/.vuepress/dist/
+# output
+es
+lib
 
-**/.nuxt/
+# vuepress publish directory
+docs/.vuepress/dist/
 
 # editor
 .idea

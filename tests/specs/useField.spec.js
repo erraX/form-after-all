@@ -1,141 +1,117 @@
+import Vue from 'vue';
 import { mount } from '@vue/test-utils';
+import { Form } from '../../src/components';
+import { DEFAULT_INITIAL_STATE } from '../../src/components/Field';
 import useField from '../../src/hooks/useField';
+import FieldState from '../FieldState';
 
-const createField = (options) => ({
-  props: {
-    name: String,
-    field: Object,
-  },
-  template: `
-    <div>
-      <span class="value">{{ value }}</span>
-      <span class="touched">{{ touched }}</span>
-      <span class="error">{{ error }}</span>
-      <span class="active">{{ active }}</span>
-      <span class="editable">{{ editable }}</span>
-      <span class="visible">{{ visible }}</span>
-    </div>
-  `,
-  setup(props) {
-    const field = useField(props.name, props.field);
-    return {
-      ...field,
-    };
-  },
-  ...options,
-});
+const getField = (wrapper) =>
+  wrapper.findComponent({ ref: 'fieldState' }).findComponent({ ref: 'field' })
+    .vm.field;
 
 describe('useField', () => {
-  it('should initialize with field `initialState` when top level `initialState` is undefined', () => {
-    const Field = createField();
+  it('should initialize with default `initialState`', () => {
     const wrapper = mount({
-      components: {
-        Form,
-        Field,
-      },
+      components: { Form, FieldState },
+      template: ` <Form><FieldState fieldPath="foo" /></Form> `,
+    });
+
+    // `undefined`, `null` will be rendered as ""
+    expect(wrapper.find('.value').text()).toBe('');
+    expect(wrapper.find('.touched').text()).toBe(
+      String(DEFAULT_INITIAL_STATE.touched)
+    );
+    expect(wrapper.find('.error').text()).toBe(
+      String(DEFAULT_INITIAL_STATE.error)
+    );
+    expect(wrapper.find('.active').text()).toBe(
+      String(DEFAULT_INITIAL_STATE.active)
+    );
+    expect(wrapper.find('.editable').text()).toBe(
+      String(DEFAULT_INITIAL_STATE.editable)
+    );
+    expect(wrapper.find('.visible').text()).toBe(
+      String(DEFAULT_INITIAL_STATE.visible)
+    );
+  });
+
+  it('should initialize with custom `initialState`', () => {
+    const wrapper = mount({
+      components: { Form, FieldState },
       template: `
-        <Form :initial-state="{
-          values: { a: 'top a' },
-        }">
-          <template #default="{ form }">
-            <span class="form-value">{{ JSON.stringify(form.values.value) }}</span>
-            <span class="form-touched">{{ JSON.stringify(form.touched.value) }}</span>
-            <Field
-              name="a"
-              :field="{
-                initialState: {
-                  value: 'aaaa',
-                  touched: true,
-                  error: 'error',
-                  active: false,
-                  editable: false,
-                  visible: false,
-                }
-              }"
-            />
-          </template>
+        <Form>
+          <FieldState
+            fieldPath="foo"
+            :initialState="{
+              value: 'foo',
+              touched: true,
+              error: 'foo is error',
+              active: false,
+              editable: false,
+              visible: false,
+            }"
+          />
         </Form>
       `,
     });
 
-    expect(wrapper.find('.form-value').text()).toBe(
-      JSON.stringify({ a: 'top a' })
-    );
-    expect(wrapper.find('.form-touched').text()).toBe(JSON.stringify({}));
-    expect(wrapper.find('.value').text()).toBe('top a');
+    expect(wrapper.find('.value').text()).toBe('foo');
     expect(wrapper.find('.touched').text()).toBe('true');
-    expect(wrapper.find('.error').text()).toBe('error');
+    expect(wrapper.find('.error').text()).toBe('foo is error');
     expect(wrapper.find('.active').text()).toBe('false');
     expect(wrapper.find('.editable').text()).toBe('false');
     expect(wrapper.find('.visible').text()).toBe('false');
   });
 
-  it('should set field value', async () => {
-    const Field = createField({
-      template: `
-        <div :data-key="name">
-          <span class="value">{{ value }}</span>
-          <button
-           class="change"
-           @click="() => setValue('next')"
-          >
-            click
-          </button>
-        </div>
-      `,
-    });
-
-    const wrapper = mount({
-      components: {
-        Form,
-        Field,
-      },
-      template: `
-        <Form :initial-state="{
-          values: { a: 'init a', b: 'init b' },
-        }">
-          <template #default="{ form }">
-            <span class="form-value">{{ JSON.stringify(form.values.value) }}</span>
-            <Field name="a" />
-            <Field name="c.d" />
-          </template>
+  describe('useField#setValue', () => {
+    it('`setValue` should work', async () => {
+      const wrapper = mount({
+        components: { Form, FieldState },
+        template: `
+        <Form>
+          <FieldState
+            ref="fieldState"
+            fieldPath="foo"
+            :initialState="{ value: 'foo' }"
+          />
         </Form>
       `,
+      });
+
+      const field = getField(wrapper);
+
+      expect(wrapper.find('.value').text()).toBe('foo');
+
+      field.setValue('next foo');
+      await Vue.nextTick();
+
+      expect(wrapper.find('.value').text()).toBe('next foo');
     });
 
-    expect(wrapper.find('.form-value').text()).toBe(
-      JSON.stringify({
-        a: 'init a',
-        b: 'init b',
-      })
-    );
-    expect(wrapper.find('[data-key="a"] .value').text()).toBe('init a');
+    it('`setValue` should working with deep key', async () => {
+      const wrapper = mount({
+        components: { Form, FieldState },
+        template: `
+        <Form>
+          <FieldState
+            ref="fieldState"
+            fieldPath="foo.bar"
+            :initialState="{ value: 'foo.bar' }"
+          />
+        </Form>
+      `,
+      });
 
-    wrapper.find('[data-key="a"] .change').trigger('click');
+      const field = getField(wrapper);
 
-    await wrapper.vm.$nextTick();
-    expect(wrapper.find('.form-value').text()).toBe(
-      JSON.stringify({
-        a: 'next',
-        b: 'init b',
-      })
-    );
-    expect(wrapper.find('[data-key="a"] .value').text()).toBe('next');
+      expect(wrapper.find('.value').text()).toBe('foo.bar');
 
-    wrapper.find('[data-key="c.d"] .change').trigger('click');
-    await wrapper.vm.$nextTick();
+      field.setValue('next foo.bar');
+      await Vue.nextTick();
 
-    expect(wrapper.find('.form-value').text()).toBe(
-      JSON.stringify({
-        a: 'next',
-        b: 'init b',
-        c: {
-          d: 'next',
-        },
-      })
-    );
-    expect(wrapper.find('[data-key="c.d"] .value').text()).toBe('next');
+      expect(wrapper.find('.value').text()).toBe('next foo.bar');
+    });
   });
 
-  it('should delete all related state after unmount', () => {});
+  describe('useField#setActive', () => {});
 });

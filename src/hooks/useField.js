@@ -1,5 +1,10 @@
 import { get, defaults } from 'lodash-es';
-import { computed, onUnmounted, watchEffect } from '@vue/composition-api';
+import {
+  reactive,
+  computed,
+  onUnmounted,
+  watchEffect,
+} from '@vue/composition-api';
 import { useFormInject } from './useForm';
 
 /**
@@ -189,7 +194,7 @@ export default function useField(
     });
   }
 
-  const field = {
+  const field = reactive({
     value,
     setValue,
     deleteValue,
@@ -220,7 +225,7 @@ export default function useField(
     handleBlur,
 
     destroy,
-  };
+  });
 
   form.registerField(fieldPath, field);
 

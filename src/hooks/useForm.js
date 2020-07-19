@@ -5,6 +5,7 @@ import {
   watch,
   inject,
   provide,
+  reactive,
   computed,
 } from '@vue/composition-api';
 import { get, each, last, isEqual, isEmpty, cloneDeep } from 'lodash-es';
@@ -272,7 +273,7 @@ export default function useForm({
     });
   }
 
-  const form = {
+  const form = reactive({
     dirty,
     submitting,
     validating,
@@ -347,7 +348,7 @@ export default function useForm({
     validateOnMount,
     validateOnBlur,
     validateOnChange,
-  };
+  });
 
   return form;
 }

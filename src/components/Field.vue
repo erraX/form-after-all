@@ -7,7 +7,15 @@
 <script>
 import useField from '../hooks/useField';
 
-const FIELD_DEFAULT_VALUE = undefined;
+export const FIELD_DEFAULT_VALUE = null;
+export const DEFAULT_INITIAL_STATE = {
+  value: FIELD_DEFAULT_VALUE,
+  touched: false,
+  error: false,
+  active: true,
+  editable: true,
+  visible: true,
+};
 
 export default {
   props: {
@@ -17,14 +25,7 @@ export default {
     },
     initialState: {
       type: Object,
-      default: () => ({
-        value: FIELD_DEFAULT_VALUE,
-        touched: false,
-        error: false,
-        active: true,
-        editable: true,
-        visible: true,
-      }),
+      default: () => DEFAULT_INITIAL_STATE,
     },
     restoreWhenBecomeInactive: {
       type: Boolean,
@@ -49,7 +50,7 @@ export default {
   },
 
   setup(props) {
-    const field = useField(props);
+    const field = useField(props.fieldPath, props);
     return { field };
   },
 };

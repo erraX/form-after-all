@@ -1,23 +1,19 @@
-import Vue from 'vue';
+import { ref } from '@vue/composition-api';
 import { $set } from '../../src/utils';
+import { isReactive } from '../utils';
 
 describe('$set', () => {
   it('should deep set to empty object', () => {
-    const obj = Vue.observable({});
-    $set(obj, 'a.b.c', 1);
-    expect(obj).toEqual({
-      a: {
-        b: {
-          c: 1,
-        },
-      },
-    });
+    const obj = ref({});
+    $set(obj.value, 'a.b.c', 1);
+    expect(obj.value).toEqual({ a: { b: { c: 1 } } });
+    expect(isReactive(obj.value.a.b, 'c')).toBe(true);
   });
 
   it('should deep set to empty array', () => {
-    const arr = Vue.observable([]);
-    $set(arr, '0.b.c[1].d', 1);
-    expect(arr).toEqual([
+    const arr = ref([]);
+    $set(arr.value, '0.b.c[1].d', 1);
+    expect(arr.value).toEqual([
       {
         b: {
           c: [
@@ -29,24 +25,26 @@ describe('$set', () => {
         },
       },
     ]);
+    expect(isReactive(arr.value[0].b.c[1], 'd')).toBe(true);
   });
 
   it('should deep set array value', () => {
-    const obj = Vue.observable({});
-    $set(obj, 'a[0].b', 1);
-    expect(obj).toEqual({
+    const obj = ref({});
+    $set(obj.value, 'a[0].b', 1);
+    expect(obj.value).toEqual({
       a: [
         {
           b: 1,
         },
       ],
     });
+    expect(isReactive(obj.value.a[0], 'b')).toBe(true);
   });
 
-  it('should deep set last key array value', () => {
-    const obj = Vue.observable({});
-    $set(obj, 'a[0].b[0]', 1);
-    expect(obj).toEqual({
+  it('should deep set last key array value', async () => {
+    const obj = ref({});
+    $set(obj.value, 'a[0].b[0]', 1);
+    expect(obj.value).toEqual({
       a: [
         {
           b: [1],
@@ -56,7 +54,7 @@ describe('$set', () => {
   });
 
   it('should override exists value', () => {
-    const obj = Vue.observable({
+    const obj = ref({
       a: [
         {
           foo: 'foo',
@@ -64,8 +62,8 @@ describe('$set', () => {
         },
       ],
     });
-    $set(obj, 'a[0].foo', 'next foo');
-    expect(obj).toEqual({
+    $set(obj.value, 'a[0].foo', 'next foo');
+    expect(obj.value).toEqual({
       a: [
         {
           foo: 'next foo',
@@ -73,5 +71,38 @@ describe('$set', () => {
         },
       ],
     });
+    expect(isReactive(obj.value.a[0], 'foo')).toBe(true);
+  });
+
+  it.skip('should delete object type parent value when value is undefined', () => {
+    const obj = ref({
+      a: [
+        {
+          foo: 'foo',
+          bar: 'bar',
+        },
+      ],
+    });
+    $set(obj.value, a[0].foo);
+    expect(obj.value).toEqual({
+      a: [
+        {
+          bar: 'bar',
+        },
+      ],
+    });
+  });
+
+  it.skip('should delete array type parent value when value is undefined', () => {
+    const obj = ref({
+      a: [
+        {
+          foo: 'foo',
+          bar: 'bar',
+        },
+      ],
+    });
+    $set(obj.value, a[0]);
+    expect(obj.value).toEqual({});
   });
 });

@@ -35,7 +35,6 @@ export default function useField(
     activeWhen,
     visibleWhen,
     editableWhen,
-    clearWhen,
     defaultValue,
     restoreWhenBecomeInactive = true,
   } = {}

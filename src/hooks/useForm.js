@@ -26,7 +26,6 @@ const emptyState = () => ({});
  */
 export default function useForm({
   initialState = {},
-  mode = 'CREATE',
 
   /* eslint-disable no-unused-vars */
   onReset = async (values, helpers) => {},
@@ -274,10 +273,6 @@ export default function useForm({
   }
 
   const form = {
-    mode,
-    isCreateMode: mode === 'CREATE',
-    isEditMode: mode === 'EDIT',
-
     dirty,
     submitting,
     validating,
@@ -353,8 +348,6 @@ export default function useForm({
     validateOnBlur,
     validateOnChange,
   };
-
-  useFormProvide(form);
 
   return form;
 }

@@ -74,9 +74,7 @@ export default function useField(
   const form = useFormInject();
 
   // value
-  const value = computed(() =>
-    get(form.values.value, fieldPath, initialState.value)
-  );
+  const value = computed(() => get(form.values, fieldPath, initialState.value));
   const setValue = (nextValue) => {
     form.setFieldValue(fieldPath, nextValue);
   };
@@ -86,7 +84,7 @@ export default function useField(
 
   // touched
   const touched = computed(() =>
-    get(form.touched.value, fieldPath, initialState.touched)
+    get(form.touched, fieldPath, initialState.touched)
   );
   const setTouched = (touched) => {
     form.setFieldTouched(fieldPath, touched);
@@ -96,9 +94,7 @@ export default function useField(
   };
 
   // error
-  const error = computed(() =>
-    get(form.errors.value, fieldPath, initialState.error)
-  );
+  const error = computed(() => get(form.errors, fieldPath, initialState.error));
   const setError = (error) => {
     form.setFieldError(fieldPath, error);
   };
@@ -108,13 +104,14 @@ export default function useField(
 
   // active
   const active = computed(() =>
-    get(form.actives.value, fieldPath, initialState.active)
+    get(form.actives, fieldPath, initialState.active)
   );
   const setActive = (
     active,
     shouldRestore = restoreWhenBecomeInactive,
     curDefaultValue = defaultValue
   ) => {
+    console.log('setActive', active);
     form.setFieldActive(fieldPath, active, shouldRestore, curDefaultValue);
   };
   const deleteActive = () => {
@@ -123,7 +120,7 @@ export default function useField(
 
   // editable
   const editable = computed(() =>
-    get(form.editable.value, fieldPath, initialState.editable)
+    get(form.editable, fieldPath, initialState.editable)
   );
   const setEditable = (editable) => {
     form.setFieldEditable(fieldPath, editable);
@@ -134,7 +131,7 @@ export default function useField(
 
   // visible
   const visible = computed(() =>
-    get(form.visible.value, fieldPath, initialState.visible)
+    get(form.visible, fieldPath, initialState.visible)
   );
   const setVisible = (visible) => {
     form.setFieldVisible(fieldPath, visible);

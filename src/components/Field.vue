@@ -37,15 +37,15 @@ export default {
     },
     activeWhen: {
       type: Function,
-      default: () => true,
+      default: null,
     },
     visibleWhen: {
       type: Function,
-      default: () => true,
+      default: null,
     },
     editableWhen: {
       type: Function,
-      default: () => true,
+      default: null,
     },
   },
 

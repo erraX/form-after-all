@@ -68,14 +68,14 @@ describe('useField', () => {
       const wrapper = mount({
         components: { Form, FieldState },
         template: `
-        <Form>
-          <FieldState
-            ref="fieldState"
-            fieldPath="foo"
-            :initialState="{ value: 'foo' }"
-          />
-        </Form>
-      `,
+          <Form ref="form">
+            <FieldState
+              ref="fieldState"
+              fieldPath="foo"
+              :initialState="{ value: 'foo' }"
+            />
+          </Form>
+        `,
       });
 
       const field = getField(wrapper);
@@ -113,5 +113,29 @@ describe('useField', () => {
     });
   });
 
-  describe('useField#setActive', () => {});
+  describe('useField#setActive', () => {
+    it('`setActive` should work', async () => {
+      const wrapper = mount({
+        components: { Form, FieldState },
+        template: `
+        <Form>
+          <FieldState
+            ref="fieldState"
+            fieldPath="foo"
+            :initialState="{ value: 'foo' }"
+          />
+        </Form>
+      `,
+      });
+
+      const field = getField(wrapper);
+
+      expect(wrapper.find('.active').text()).toBe('true');
+
+      field.setActive(false);
+      await Vue.nextTick();
+
+      expect(wrapper.find('.active').text()).toBe('false');
+    });
+  });
 });

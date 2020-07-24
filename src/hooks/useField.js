@@ -52,7 +52,7 @@ export default function useField(
   initialState = defaults(initialState, {
     value: '',
     touched: false,
-    error: undefined,
+    error: '',
     active: true,
     editable: true,
     visible: true,
@@ -77,9 +77,6 @@ export default function useField(
   const value = computed(() => get(form.values, fieldPath, initialState.value));
   const setValue = (nextValue) => {
     form.setFieldValue(fieldPath, nextValue);
-  };
-  const deleteValue = () => {
-    form.deleteFieldValue(fieldPath);
   };
 
   // touched
@@ -140,7 +137,6 @@ export default function useField(
   };
 
   const destroy = () => {
-    deleteValue();
     deleteTouched();
     deleteError();
     deleteActive();
@@ -186,23 +182,40 @@ export default function useField(
   }
 
   if (editableWhen) {
-    setEditable(!!editableWhen());
+    let isCollectDeps = true;
     watchEffect(() => {
-      setEditable(!!editableWhen());
+      // should exec side effects on first time
+      const nextEditable = !!editableWhen();
+
+      // but should not set value
+      if (isCollectDeps) {
+        isCollectDeps = false;
+        return;
+      }
+
+      setEditable(nextEditable);
     });
   }
 
   if (visibleWhen) {
-    setVisible(!!visibleWhen());
+    let isCollectDeps = true;
     watchEffect(() => {
-      setVisible(!!visibleWhen());
+      // should exec side effects on first time
+      const nextVisible = !!visibleWhen();
+
+      // but should not set value
+      if (isCollectDeps) {
+        isCollectDeps = false;
+        return;
+      }
+
+      setVisible(nextVisible);
     });
   }
 
   const field = reactive({
     value,
     setValue,
-    deleteValue,
 
     touched,
     setTouched,

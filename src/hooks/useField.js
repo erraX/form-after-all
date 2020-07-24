@@ -48,9 +48,8 @@ export default function useField(
     throw new Error('`fieldPath` is missing when register a field.');
   }
 
-  // eslint-disable-next-line no-param-reassign
   initialState = defaults(initialState, {
-    value: '',
+    value: null,
     touched: false,
     error: '',
     active: true,
@@ -74,35 +73,39 @@ export default function useField(
   const form = useFormInject();
 
   // value
-  const value = computed(() => get(form.values, fieldPath, initialState.value));
   const setValue = (nextValue) => {
     form.setFieldValue(fieldPath, nextValue);
   };
+  const value = computed(() => get(form.values, fieldPath));
+  if (value.value === undefined) {
+    setValue(initialState.value);
+  }
 
   // touched
-  const touched = computed(() =>
-    get(form.touched, fieldPath, initialState.touched)
-  );
   const setTouched = (touched) => {
     form.setFieldTouched(fieldPath, touched);
   };
   const deleteTouched = () => {
     form.deleteFieldTouched(fieldPath);
   };
+  const touched = computed(() => get(form.touched, fieldPath));
+  if (touched.value === undefined) {
+    setTouched(initialState.touched);
+  }
 
   // error
-  const error = computed(() => get(form.errors, fieldPath, initialState.error));
   const setError = (error) => {
     form.setFieldError(fieldPath, error);
   };
   const deleteError = () => {
     form.deleteFieldError(fieldPath);
   };
+  const error = computed(() => get(form.errors, fieldPath));
+  if (error.value === undefined) {
+    setError(initialState.error);
+  }
 
   // active
-  const active = computed(() =>
-    get(form.actives, fieldPath, initialState.active)
-  );
   const setActive = (
     active,
     shouldRestore = restoreWhenBecomeInactive,
@@ -113,28 +116,40 @@ export default function useField(
   const deleteActive = () => {
     form.deleteFieldActive(fieldPath);
   };
+  const active = computed(() =>
+    get(form.actives, fieldPath, initialState.active)
+  );
+  if (active.value === undefined) {
+    setActive(initialState.active);
+  }
 
   // editable
-  const editable = computed(() =>
-    get(form.editable, fieldPath, initialState.editable)
-  );
   const setEditable = (editable) => {
     form.setFieldEditable(fieldPath, editable);
   };
   const deleteEditable = () => {
     form.deleteFieldActive(fieldPath);
   };
+  const editable = computed(() =>
+    get(form.editable, fieldPath, initialState.editable)
+  );
+  if (editable.value === undefined) {
+    setEditable(initialState.editable);
+  }
 
   // visible
-  const visible = computed(() =>
-    get(form.visible, fieldPath, initialState.visible)
-  );
   const setVisible = (visible) => {
     form.setFieldVisible(fieldPath, visible);
   };
   const deleteVisible = () => {
     form.deleteFieldVisible(fieldPath);
   };
+  const visible = computed(() =>
+    get(form.visible, fieldPath, initialState.visible)
+  );
+  if (visible.value === undefined) {
+    setVisible(initialState.visible);
+  }
 
   const destroy = () => {
     deleteTouched();

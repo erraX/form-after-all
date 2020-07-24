@@ -11,7 +11,7 @@ export const FIELD_DEFAULT_VALUE = null;
 export const DEFAULT_INITIAL_STATE = {
   value: FIELD_DEFAULT_VALUE,
   touched: false,
-  error: false,
+  error: '',
   active: true,
   editable: true,
   visible: true,

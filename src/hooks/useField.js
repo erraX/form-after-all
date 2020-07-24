@@ -111,7 +111,6 @@ export default function useField(
     shouldRestore = restoreWhenBecomeInactive,
     curDefaultValue = defaultValue
   ) => {
-    console.log('setActive', active);
     form.setFieldActive(fieldPath, active, shouldRestore, curDefaultValue);
   };
   const deleteActive = () => {
@@ -171,9 +170,18 @@ export default function useField(
   });
 
   if (activeWhen) {
-    setActive(!!activeWhen(), restoreWhenBecomeInactive, defaultValue);
+    let isCollectDeps = true;
     watchEffect(() => {
-      setActive(!!activeWhen(), restoreWhenBecomeInactive, defaultValue);
+      // should exec side effects on first time
+      const nextActive = !!activeWhen();
+
+      // but should not set value
+      if (isCollectDeps) {
+        isCollectDeps = false;
+        return;
+      }
+
+      setActive(nextActive, restoreWhenBecomeInactive, defaultValue);
     });
   }
 

@@ -41,8 +41,8 @@ export default function useForm({
   const initialStateValue = unref(initialState);
   const valuesBag = useStateBag(initialStateValue.values || emptyState());
   const touchedBag = useStateBag(initialStateValue.touched || emptyState());
-  const errorsBag = useStateBag(initialStateValue.errors || emptyState());
-  const activesBag = useStateBag(initialStateValue.actives || emptyState());
+  const errorBag = useStateBag(initialStateValue.error || emptyState());
+  const activeBag = useStateBag(initialStateValue.active || emptyState());
   const editableBag = useStateBag(initialStateValue.editable || emptyState());
   const visibleBag = useStateBag(initialStateValue.visible || emptyState());
   const additionBag = useStateBag(initialStateValue.addition || emptyState());
@@ -63,19 +63,19 @@ export default function useForm({
   const setFieldTouched = touchedBag.setFieldState;
   const deleteFieldTouched = touchedBag.deleteFieldState;
 
-  // errors
-  const errors = errorsBag.state;
-  const getFieldError = errorsBag.getFieldState;
-  const setErrors = errorsBag.setState;
-  const setBatchErrors = errorsBag.setBatchState;
-  const setFieldError = errorsBag.setFieldState;
-  const deleteFieldError = errorsBag.deleteFieldState;
+  // error
+  const error = errorBag.state;
+  const getFieldError = errorBag.getFieldState;
+  const setError = errorBag.setState;
+  const setBatchError = errorBag.setBatchState;
+  const setFieldError = errorBag.setFieldState;
+  const deleteFieldError = errorBag.deleteFieldState;
 
-  // actives
-  const actives = activesBag.state;
-  const getFieldActive = activesBag.getFieldState;
-  const setActives = activesBag.setState;
-  const setBatchActives = activesBag.setBatchState;
+  // active
+  const active = activeBag.state;
+  const getFieldActive = activeBag.getFieldState;
+  const setActive = activeBag.setState;
+  const setBatchActive = activeBag.setBatchState;
 
   // 未激活的时候字段值设为默认
   const setFieldActive = (
@@ -84,12 +84,12 @@ export default function useForm({
     shouldRestore = true,
     defaultValue
   ) => {
-    activesBag.setFieldState(fieldPath, active);
+    activeBag.setFieldState(fieldPath, active);
     if (!active && shouldRestore) {
       setFieldValue(fieldPath, defaultValue);
     }
   };
-  const deleteFieldActive = activesBag.deleteFieldState;
+  const deleteFieldActive = activeBag.deleteFieldState;
 
   // editable
   const editable = editableBag.state;
@@ -203,11 +203,11 @@ export default function useForm({
     nextState.touched && touchedBag.setInitialState(nextState.touched);
     touchedBag.state.value = touchedBag.getClonedInitialState();
 
-    nextState.errors && errorsBag.setInitialState(nextState.errors);
-    errorsBag.state.value = errorsBag.getClonedInitialState();
+    nextState.error && errorBag.setInitialState(nextState.error);
+    errorBag.state.value = errorBag.getClonedInitialState();
 
-    nextState.actives && activesBag.setInitialState(nextState.actives);
-    activesBag.state.value = activesBag.getClonedInitialState();
+    nextState.active && activeBag.setInitialState(nextState.active);
+    activeBag.state.value = activeBag.getClonedInitialState();
 
     nextState.editable && editableBag.setInitialState(nextState.editable);
     editableBag.state.value = editableBag.getClonedInitialState();
@@ -219,11 +219,11 @@ export default function useForm({
   const execValidate = async (values, form) => {
     validating.value = true;
     try {
-      const errors = await validate(values, form);
+      const error = await validate(values, form);
 
-      setErrors(errors || {});
+      setError(error || {});
 
-      const isValid = isEmpty(errors);
+      const isValid = isEmpty(error);
       return isValid;
     } catch (error) {
       isDev && console.error('`useForm.execValidate` error', error);
@@ -293,17 +293,17 @@ export default function useForm({
     setFieldTouched,
     deleteFieldTouched,
 
-    errors,
+    error,
     getFieldError,
-    setErrors,
-    setBatchErrors,
+    setError,
+    setBatchError,
     setFieldError,
     deleteFieldError,
 
-    actives,
+    active,
     getFieldActive,
-    setActives,
-    setBatchActives,
+    setActive,
+    setBatchActive,
     setFieldActive,
     deleteFieldActive,
 

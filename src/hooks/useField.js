@@ -1,4 +1,4 @@
-import { get, defaults } from 'lodash-es';
+import { get } from 'lodash-es';
 import {
   reactive,
   computed,
@@ -13,7 +13,6 @@ import { useFormInject } from './useForm';
  * @type {string[]}
  */
 export const useFieldProps = [
-  'initialState',
   'activeWhen',
   'visibleWhen',
   'editableWhen',
@@ -36,7 +35,8 @@ export const useFieldProps = [
 export default function useField(
   fieldPath,
   {
-    initialState = {},
+    initialTouched = false,
+    initialError = '',
     activeWhen,
     visibleWhen,
     editableWhen,
@@ -47,15 +47,6 @@ export default function useField(
   if (!fieldPath) {
     throw new Error('`fieldPath` is missing when register a field.');
   }
-
-  initialState = defaults(initialState, {
-    value: null,
-    touched: false,
-    error: '',
-    active: true,
-    editable: true,
-    visible: true,
-  });
 
   if (
     activeWhen &&
@@ -73,39 +64,37 @@ export default function useField(
   const form = useFormInject();
 
   // value
+  const value = computed(() => get(form.values, fieldPath));
   const setValue = (nextValue) => {
     form.setFieldValue(fieldPath, nextValue);
   };
-  const value = computed(() => get(form.values, fieldPath));
-  if (value.value === undefined) {
-    setValue(initialState.value);
-  }
 
   // touched
+  const touched = computed(() => get(form.touched, fieldPath));
   const setTouched = (touched) => {
     form.setFieldTouched(fieldPath, touched);
   };
   const deleteTouched = () => {
     form.deleteFieldTouched(fieldPath);
   };
-  const touched = computed(() => get(form.touched, fieldPath));
   if (touched.value === undefined) {
-    setTouched(initialState.touched);
+    setTouched(initialTouched);
   }
 
   // error
+  const error = computed(() => get(form.error, fieldPath));
   const setError = (error) => {
     form.setFieldError(fieldPath, error);
   };
   const deleteError = () => {
     form.deleteFieldError(fieldPath);
   };
-  const error = computed(() => get(form.errors, fieldPath));
   if (error.value === undefined) {
-    setError(initialState.error);
+    setError(initialError);
   }
 
   // active
+  const active = computed(() => get(form.active, fieldPath));
   const setActive = (
     active,
     shouldRestore = restoreWhenBecomeInactive,
@@ -116,39 +105,32 @@ export default function useField(
   const deleteActive = () => {
     form.deleteFieldActive(fieldPath);
   };
-  const active = computed(() =>
-    get(form.actives, fieldPath, initialState.active)
-  );
   if (active.value === undefined) {
-    setActive(initialState.active);
+    setActive(true);
   }
 
   // editable
+  const editable = computed(() => get(form.editable, fieldPath));
   const setEditable = (editable) => {
     form.setFieldEditable(fieldPath, editable);
   };
   const deleteEditable = () => {
     form.deleteFieldActive(fieldPath);
   };
-  const editable = computed(() =>
-    get(form.editable, fieldPath, initialState.editable)
-  );
   if (editable.value === undefined) {
-    setEditable(initialState.editable);
+    setEditable(true);
   }
 
   // visible
+  const visible = computed(() => get(form.visible, fieldPath));
   const setVisible = (visible) => {
     form.setFieldVisible(fieldPath, visible);
   };
   const deleteVisible = () => {
     form.deleteFieldVisible(fieldPath);
   };
-  const visible = computed(() =>
-    get(form.visible, fieldPath, initialState.visible)
-  );
   if (visible.value === undefined) {
-    setVisible(initialState.visible);
+    setVisible(true);
   }
 
   const destroy = () => {
@@ -181,50 +163,20 @@ export default function useField(
   });
 
   if (activeWhen) {
-    let isCollectDeps = true;
     watchEffect(() => {
-      // should exec side effects on first time
-      const nextActive = !!activeWhen();
-
-      // but should not set value
-      if (isCollectDeps) {
-        isCollectDeps = false;
-        return;
-      }
-
-      setActive(nextActive, restoreWhenBecomeInactive, defaultValue);
+      setActive(!!activeWhen(), restoreWhenBecomeInactive, defaultValue);
     });
   }
 
   if (editableWhen) {
-    let isCollectDeps = true;
     watchEffect(() => {
-      // should exec side effects on first time
-      const nextEditable = !!editableWhen();
-
-      // but should not set value
-      if (isCollectDeps) {
-        isCollectDeps = false;
-        return;
-      }
-
-      setEditable(nextEditable);
+      setEditable(!!editableWhen());
     });
   }
 
   if (visibleWhen) {
-    let isCollectDeps = true;
     watchEffect(() => {
-      // should exec side effects on first time
-      const nextVisible = !!visibleWhen();
-
-      // but should not set value
-      if (isCollectDeps) {
-        isCollectDeps = false;
-        return;
-      }
-
-      setVisible(nextVisible);
+      setVisible(!!visibleWhen());
     });
   }
 

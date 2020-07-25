@@ -11,24 +11,24 @@ describe('useForm', () => {
 
     expect(form.values.value).toEqual({});
     expect(form.touched.value).toEqual({});
-    expect(form.errors.value).toEqual({});
-    expect(form.actives.value).toEqual({});
+    expect(form.error.value).toEqual({});
+    expect(form.active.value).toEqual({});
     expect(form.editable.value).toEqual({});
     expect(form.visible.value).toEqual({});
 
     form = useForm({});
     expect(form.values.value).toEqual({});
     expect(form.touched.value).toEqual({});
-    expect(form.errors.value).toEqual({});
-    expect(form.actives.value).toEqual({});
+    expect(form.error.value).toEqual({});
+    expect(form.active.value).toEqual({});
     expect(form.editable.value).toEqual({});
     expect(form.visible.value).toEqual({});
 
     form = useForm();
     expect(form.values.value).toEqual({});
     expect(form.touched.value).toEqual({});
-    expect(form.errors.value).toEqual({});
-    expect(form.actives.value).toEqual({});
+    expect(form.error.value).toEqual({});
+    expect(form.active.value).toEqual({});
     expect(form.editable.value).toEqual({});
     expect(form.visible.value).toEqual({});
   });
@@ -38,16 +38,16 @@ describe('useForm', () => {
       initialState: {
         values: { a: 1 },
         touched: { a: true },
-        errors: { a: 'error' },
-        actives: { a: true },
+        error: { a: 'error' },
+        active: { a: true },
         editable: { a: false },
         visible: { a: false },
       },
     });
     expect(form.values.value).toEqual({ a: 1 });
     expect(form.touched.value).toEqual({ a: true });
-    expect(form.errors.value).toEqual({ a: 'error' });
-    expect(form.actives.value).toEqual({ a: true });
+    expect(form.error.value).toEqual({ a: 'error' });
+    expect(form.active.value).toEqual({ a: true });
     expect(form.editable.value).toEqual({ a: false });
     expect(form.visible.value).toEqual({ a: false });
   });
@@ -66,8 +66,8 @@ describe('useForm', () => {
           ...initialState,
           values: { a: '1' },
           touched: { a: true },
-          errors: { a: 'error' },
-          actives: { a: true },
+          error: { a: 'error' },
+          active: { a: true },
           editable: { a: true },
           visible: { a: true },
         },
@@ -75,8 +75,8 @@ describe('useForm', () => {
 
       watch(() => form.values.value.a, cbValue);
       watch(() => form.touched.value.a, cbTouched);
-      watch(() => form.errors.value.a, cbError);
-      watch(() => form.actives.value.a, cbActive);
+      watch(() => form.error.value.a, cbError);
+      watch(() => form.active.value.a, cbActive);
       watch(() => form.editable.value.a, cbEditable);
       watch(() => form.visible.value.a, cbVisible);
 
@@ -105,16 +105,16 @@ describe('useForm', () => {
       form.reinitialize({
         values: { a: '2' },
         touched: { a: false },
-        errors: { a: 'none' },
-        actives: { a: false },
+        error: { a: 'none' },
+        active: { a: false },
         editable: { a: false },
         visible: { a: false },
       });
 
       expect(form.values.value).toEqual({ a: '2' });
       expect(form.touched.value).toEqual({ a: false });
-      expect(form.errors.value).toEqual({ a: 'none' });
-      expect(form.actives.value).toEqual({ a: false });
+      expect(form.error.value).toEqual({ a: 'none' });
+      expect(form.active.value).toEqual({ a: false });
       expect(form.editable.value).toEqual({ a: false });
       expect(form.visible.value).toEqual({ a: false });
 
@@ -147,16 +147,16 @@ describe('useForm', () => {
       } = createForm({
         values: { a: '1' },
         touched: { a: true },
-        errors: { a: 'error' },
-        actives: { a: true },
+        error: { a: 'error' },
+        active: { a: true },
         editable: { a: true },
         visible: { a: true },
       });
 
       form.values.value.a = '2';
       form.touched.value.a = false;
-      form.errors.value.a = 'none';
-      form.actives.value.a = false;
+      form.error.value.a = 'none';
+      form.active.value.a = false;
       form.editable.value.a = false;
       form.visible.value.a = false;
 
@@ -173,7 +173,7 @@ describe('useForm', () => {
       expect(cbEditable).toHaveBeenCalledTimes(3);
       expect(cbVisible).toHaveBeenCalledTimes(3);
 
-      expect(form.actives.value).toEqual({ a: true });
+      expect(form.active.value).toEqual({ a: true });
       expect(form.editable.value).toEqual({ a: true });
       expect(form.visible.value).toEqual({ a: true });
 

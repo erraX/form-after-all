@@ -105,6 +105,37 @@ describe('useField', () => {
     expect(form.visible).toEqual({ foo: true });
   });
 
+  it.only('should set `active`, `editable`, `visible` array state by `*When` result', () => {
+    const { form, fields } = createFormWrapper({
+      formProps: {
+        initialState: {
+          active: { arr: [false] },
+          editable: { arr: [false] },
+          visible: { arr: [false] },
+        },
+      },
+      fields: [
+        {
+          fieldPath: 'arr[0]',
+          props: {
+            activeWhen: () => true,
+            editableWhen: () => true,
+            visibleWhen: () => true,
+          },
+        },
+      ],
+    });
+    const field = fields['arr[0]'];
+
+    expect(field.active).toBe(true);
+    expect(field.editable).toBe(true);
+    expect(field.visible).toBe(true);
+
+    expect(form.active).toEqual({ arr: [true] });
+    expect(form.editable).toEqual({ arr: [true] });
+    expect(form.visible).toEqual({ arr: [true] });
+  });
+
   describe('useField#setValue', () => {
     it('should work', () => {
       const { form, fields } = createFormWrapper({

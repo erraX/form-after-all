@@ -1,4 +1,5 @@
 import typescript from 'rollup-plugin-typescript2';
+import vue from 'rollup-plugin-vue';
 import pkg from './package.json';
 
 export default {
@@ -6,18 +7,16 @@ export default {
   output: [
     {
       file: pkg.main,
-      format: 'cjs'
+      format: 'cjs',
     },
     {
       file: pkg.module,
-      format: 'es'
-    }
+      format: 'es',
+    },
   ],
   external: [
     ...Object.keys(pkg.dependencies || {}),
-    ...Object.keys(pkg.peerDependencies || {})
+    ...Object.keys(pkg.peerDependencies || {}),
   ],
-  plugins: [
-    typescript()
-  ]
+  plugins: [typescript(), vue()],
 };

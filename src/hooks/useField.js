@@ -74,24 +74,12 @@ export default function useField(
   const setTouched = (touched) => {
     form.setFieldTouched(fieldPath, touched);
   };
-  const deleteTouched = () => {
-    form.deleteFieldTouched(fieldPath);
-  };
-  if (touched.value === undefined) {
-    setTouched(initialTouched);
-  }
 
   // error
   const error = computed(() => get(form.error, fieldPath));
   const setError = (error) => {
     form.setFieldError(fieldPath, error);
   };
-  const deleteError = () => {
-    form.deleteFieldError(fieldPath);
-  };
-  if (error.value === undefined) {
-    setError(initialError);
-  }
 
   // active
   const active = computed(() => get(form.active, fieldPath));
@@ -102,43 +90,17 @@ export default function useField(
   ) => {
     form.setFieldActive(fieldPath, active, shouldRestore, curDefaultValue);
   };
-  const deleteActive = () => {
-    form.deleteFieldActive(fieldPath);
-  };
-  if (active.value === undefined) {
-    setActive(true);
-  }
 
   // editable
   const editable = computed(() => get(form.editable, fieldPath));
   const setEditable = (editable) => {
     form.setFieldEditable(fieldPath, editable);
   };
-  const deleteEditable = () => {
-    form.deleteFieldActive(fieldPath);
-  };
-  if (editable.value === undefined) {
-    setEditable(true);
-  }
 
   // visible
   const visible = computed(() => get(form.visible, fieldPath));
   const setVisible = (visible) => {
     form.setFieldVisible(fieldPath, visible);
-  };
-  const deleteVisible = () => {
-    form.deleteFieldVisible(fieldPath);
-  };
-  if (visible.value === undefined) {
-    setVisible(true);
-  }
-
-  const destroy = () => {
-    deleteTouched();
-    deleteError();
-    deleteActive();
-    deleteEditable();
-    deleteVisible();
   };
 
   const handleInput = (value) => {
@@ -158,27 +120,59 @@ export default function useField(
   };
 
   onUnmounted(() => {
-    destroy();
     form.unregisterField(fieldPath);
   });
 
+  let stopWatchActive = null;
   if (activeWhen) {
-    watchEffect(() => {
+    stopWatchActive = watchEffect(() => {
       setActive(!!activeWhen(), restoreWhenBecomeInactive, defaultValue);
     });
   }
 
+  let stopWatchEditable = null;
   if (editableWhen) {
-    watchEffect(() => {
+    stopWatchEditable = watchEffect(() => {
       setEditable(!!editableWhen());
     });
   }
 
+  let stopWatchVisible = null;
   if (visibleWhen) {
-    watchEffect(() => {
+    stopWatchVisible = watchEffect(() => {
       setVisible(!!visibleWhen());
     });
   }
+
+  const destroy = () => {
+    stopWatchActive && stopWatchActive();
+    stopWatchEditable && stopWatchEditable();
+    stopWatchVisible && stopWatchVisible();
+  };
+
+  const reinitialize = () => {
+    if (touched.value === undefined) {
+      setTouched(initialTouched);
+    }
+    if (error.value === undefined) {
+      setError(initialError);
+    }
+    if (active.value === undefined) {
+      setActive(true);
+    }
+    if (active.value === false) {
+      setActive(false);
+    }
+
+    if (editable.value === undefined) {
+      setEditable(true);
+    }
+    if (visible.value === undefined) {
+      setVisible(true);
+    }
+  };
+
+  reinitialize();
 
   const field = reactive({
     value,
@@ -186,30 +180,26 @@ export default function useField(
 
     touched,
     setTouched,
-    deleteTouched,
 
     error,
     setError,
-    deleteError,
 
     active,
     setActive,
-    deleteActive,
 
     editable,
     setEditable,
-    deleteEditable,
 
     visible,
     setVisible,
-    deleteVisible,
+
+    destroy,
+    reinitialize,
 
     handleInput,
     handleChange,
     handleInputChange,
     handleBlur,
-
-    destroy,
   });
 
   form.registerField(fieldPath, field);

@@ -45,14 +45,16 @@ export default function useForm({
   const activeBag = useStateBag(initialStateValue.active || emptyState());
   const editableBag = useStateBag(initialStateValue.editable || emptyState());
   const visibleBag = useStateBag(initialStateValue.visible || emptyState());
-  const additionBag = useStateBag(initialStateValue.addition || emptyState());
 
   // values
   const values = valuesBag.state;
   const getFieldValue = valuesBag.getFieldState;
   const setValues = valuesBag.setState;
   const setBatchValues = valuesBag.setBatchState;
-  const setFieldValue = valuesBag.setFieldState;
+  const setFieldValue = (fieldPath, value) => {
+    valuesBag.setFieldState(fieldPath, value);
+    touchedBag.setFieldState(fieldPath, true);
+  };
   const deleteFieldValue = valuesBag.deleteFieldState;
 
   // touched
@@ -107,14 +109,6 @@ export default function useForm({
   const setFieldVisible = visibleBag.setFieldState;
   const deleteFieldVisible = visibleBag.deleteFieldState;
 
-  // addition
-  const addition = additionBag.state;
-  const getFieldAddition = additionBag.getFieldState;
-  const setAddition = additionBag.setState;
-  const setBatchAddition = additionBag.setBatchState;
-  const setFieldAddition = additionBag.setFieldState;
-  const deleteFieldAddition = additionBag.deleteFieldState;
-
   const fields = ref({});
 
   const submitting = ref(false);
@@ -139,8 +133,10 @@ export default function useForm({
   // 所有 `active` 的表单值
   const activeValues = computed(() => {
     const curValues = cloneDeep(valuesBag.getState());
+
+    // TODO: retrieve active state by `form.active`
     each(fields.value, (field, fieldPath) => {
-      if (field.active.value !== false) {
+      if (field.active !== false) {
         return;
       }
 
@@ -214,6 +210,10 @@ export default function useForm({
 
     nextState.visible && visibleBag.setInitialState(nextState.visible);
     visibleBag.state.value = visibleBag.getClonedInitialState();
+
+    each(fields.value, (field) => {
+      field.reinitialize();
+    });
   };
 
   const execValidate = async (values, form) => {
@@ -320,14 +320,6 @@ export default function useForm({
     setBatchVisible,
     setFieldVisible,
     deleteFieldVisible,
-
-    // addition
-    addition,
-    setAddition,
-    setBatchAddition,
-    getFieldAddition,
-    setFieldAddition,
-    deleteFieldAddition,
 
     reinitialize,
 

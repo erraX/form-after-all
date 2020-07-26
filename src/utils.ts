@@ -2,7 +2,7 @@ import Vue from 'vue';
 import { isRef } from '@vue/composition-api';
 
 // environment is development or not
-export const isDev: boolean = process.env.NODE_ENv === 'development';
+export const isDev: boolean = process.env.NODE_ENV === 'development';
 
 /**
  * unwrap `Ref` type value
@@ -82,7 +82,9 @@ export const $set = (
 
     if (index === lastIndex) {
       // TODO: delete if value is undefined
-      Vue.set(parent, key, value);
+      if (parent[key] !== value) {
+        Vue.set(parent, key, value);
+      }
     } else if (!parent[key]) {
       Vue.set(parent, key, {});
     }

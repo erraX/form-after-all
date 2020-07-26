@@ -1,4 +1,6 @@
 import Vue from 'vue';
+// import { isEmpty, get, toPath } from 'lodash-es';
+import { toPath } from 'lodash-es';
 import { isRef } from '@vue/composition-api';
 
 // environment is development or not
@@ -9,109 +11,59 @@ export const isDev: boolean = process.env.NODE_ENV === 'development';
  */
 export const unref = (value: any): any => (isRef(value) ? value.value : value);
 
-/**
- * array key is marked as `#1#` `#2#` ...
- * `matchArrayKey` will extract these keys
- * eg. '#0#' => '0'
- */
-const REG_ARRAY_KEY = /#(.+)#/;
-const matchArrayKey = (key: string): { matched: boolean; result?: string } => {
-  const result = key.match(REG_ARRAY_KEY);
-  if (!result) {
-    return { matched: false };
+export const isInteger = (obj: any): boolean =>
+  String(Math.floor(Number(obj))) === obj;
+
+export const $delete = (obj: any, path: string | string[]) => {
+  const pathArray = toPath(path);
+
+  let result = obj;
+  let i = 0;
+  let currentPath: string;
+  for (; i < pathArray.length - 1; i++) {
+    currentPath = pathArray[i];
+    if (result[currentPath] === undefined) {
+      return;
+    }
+    result = result[currentPath];
   }
-  return {
-    matched: true,
-    result: result[1],
-  };
+
+  currentPath = pathArray[i];
+  Vue.delete(result, currentPath);
 };
 
-/**
- * match `key[index]` type path
- * eg. 'a[0]' => `['a', '0']`
- */
-const REG_ARRAY_PATH = /(.+)\[(.+)]/;
-const matchArrayPath = (
-  path: string
-): { matched: boolean; result?: [string, string] } => {
-  const result = path.match(REG_ARRAY_PATH);
-  if (!result) {
-    return { matched: false };
+export const $set = (obj: any, path: string | string[], value?: any) => {
+  const pathArray = toPath(path);
+
+  let result = obj;
+  let i = 0;
+  let currentPath: string;
+  for (; i < pathArray.length - 1; i++) {
+    currentPath = pathArray[i];
+    if (result[currentPath] === undefined) {
+      // next key is `0`, `1`, ...
+      // means `result[currentPath]` is `Array`
+      const nextPath = pathArray[i + 1];
+      const isValueArray = isInteger(nextPath) && Number(nextPath) >= 0;
+      Vue.set(result, currentPath, isValueArray ? [] : {});
+    }
+    result = result[currentPath];
   }
-  return {
-    matched: true,
-    result: [result[1], result[2]],
-  };
-};
 
-/**
- * split path string to path array
- * eg.  'a.b.c' => ['a', 'b', 'c']
- *      'a.b[0].c' => ['a', '#b#', '0', 'c']
- */
-const pathToKeys = (path: string): string[] =>
-  path
-    .split('.')
-    .filter((p) => p !== '')
-    .map((p) => {
-      const { matched, result: arrayPath } = matchArrayPath(p);
-      if (!matched || !arrayPath) {
-        return p;
-      }
-      return [`#${arrayPath[0]}#`, arrayPath[1]];
-    })
-    .flat();
+  currentPath = pathArray[i];
+  if (value === undefined) {
+    $delete(result, currentPath);
 
-export const $set = (
-  obj: { [key: string]: any },
-  path: string,
-  value?: any
-) => {
-  const keys = pathToKeys(path);
-  const lastIndex = keys.length - 1;
+    // should remove empty parent value ?
 
-  keys.reduce((parent, key, index) => {
-    const { matched, result: arrayKey } = matchArrayKey(key);
-
-    if (matched && arrayKey) {
-      if (!parent[arrayKey]) {
-        Vue.set(parent, arrayKey, []);
-      }
-      return parent[arrayKey];
+    // const prevPath = pathArray.slice(0, i);
+    // const prevValue = get(obj, prevPath);
+    // if (isEmpty(prevValue)) {
+    //   $delete(obj, prevPath);
+    // }
+  } else {
+    if (result[currentPath] !== value) {
+      Vue.set(result, currentPath, value);
     }
-
-    if (index === lastIndex) {
-      // TODO: delete if value is undefined
-      if (parent[key] !== value) {
-        Vue.set(parent, key, value);
-      }
-    } else if (!parent[key]) {
-      Vue.set(parent, key, {});
-    }
-
-    return parent[key];
-  }, obj);
-
-  return obj;
-};
-
-export const $delete = (obj: { [key: string]: any }, path: string) => {
-  const keys = pathToKeys(path);
-  const lastIndex = keys.length - 1;
-  keys.reduce((parent, key, index) => {
-    if (parent === undefined) {
-      return undefined;
-    }
-
-    const { matched, result: arrayKey } = matchArrayKey(key);
-    if (matched && arrayKey) {
-      return parent[arrayKey];
-    }
-
-    if (index === lastIndex) {
-      Vue.delete(parent, key);
-    }
-
-    return parent[key];
-  }, obj);
+  }
 };

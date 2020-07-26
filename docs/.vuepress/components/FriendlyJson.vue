@@ -14,7 +14,7 @@ export default {
     },
     json: {
       type: Object,
-      requried: true,
+      required: true,
     },
   },
 };

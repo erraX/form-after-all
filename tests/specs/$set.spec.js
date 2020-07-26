@@ -3,6 +3,19 @@ import { $set } from '../../src/utils';
 import { isReactive } from '../utils';
 
 describe('$set', () => {
+  it('should set to one level key object', () => {
+    const obj = ref({});
+    $set(obj.value, 'a', 1);
+    expect(obj.value).toEqual({ a: 1 });
+    expect(isReactive(obj.value, 'a')).toBe(true);
+  });
+
+  it('should set to one level key Array', () => {
+    const obj = ref([]);
+    $set(obj.value, '0', 1);
+    expect(obj.value).toEqual([1]);
+  });
+
   it('should deep set to empty object', () => {
     const obj = ref({});
     $set(obj.value, 'a.b.c', 1);
@@ -93,16 +106,28 @@ describe('$set', () => {
     });
   });
 
-  it.skip('should delete array type parent value when value is undefined', () => {
-    const obj = ref({
-      a: [
-        {
-          foo: 'foo',
-          bar: 'bar',
-        },
-      ],
-    });
-    $set(obj.value, a[0]);
-    expect(obj.value).toEqual({});
-  });
+  // it('should delete array type parent value when value is empty', () => {
+  //   const obj = ref({
+  //     a: [
+  //       {
+  //         foo: 'foo',
+  //         bar: 'bar',
+  //       },
+  //     ],
+  //   });
+  //   $set(obj.value, 'a[0]');
+  //   expect(obj.value).toEqual({});
+  // });
+  //
+  // it('should delete object type parent value when value is empty', () => {
+  //   const obj = ref({
+  //     a: {
+  //       b: {
+  //         foo: 'foo',
+  //       },
+  //     },
+  //   });
+  //   $set(obj.value, 'a.b.foo');
+  //   expect(obj.value).toEqual({ a: {} });
+  // });
 });

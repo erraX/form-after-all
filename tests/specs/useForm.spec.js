@@ -164,7 +164,7 @@ describe('useForm', () => {
               arr: [1, 2, 3],
             },
             active: {
-              arr: [true, false, true],
+              arr: [true, true, false],
             },
           },
         },
@@ -174,7 +174,7 @@ describe('useForm', () => {
           { fieldPath: 'arr[2]' },
         ],
       });
-      expect(form.activeValues).toEqual({ arr: [1, 3] });
+      expect(form.activeValues).toEqual({ arr: [1, 2] });
     });
   });
 

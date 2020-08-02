@@ -12,123 +12,117 @@ import {
 } from '@vue/composition-api';
 import { get, each, isEqual, isEmpty, cloneDeep } from 'lodash-es';
 import { $set, $delete, cloneNestedObject, isDev } from '../utils';
+import { UseField } from './useField';
 
-export type FieldPath = string | string[];
-
-export interface FormState {
-  values: Record<string, any>;
-  error: Record<string, any>;
-  touched: Record<string, any>;
-  active: Record<string, any>;
-  editable: Record<string, any>;
-  visible: Record<string, any>;
+export interface NestedObjectType<T> {
+  [key: string]:
+    | T
+    | NestedObjectType<T>
+    | Array<T | NestedObjectType<T> | NestedObjectType<T>[]>;
 }
 
-export interface UseFormParams {
+export type ValuesState = NestedObjectType<any>;
+export type ErrorState = NestedObjectType<string>;
+export type TouchedState = NestedObjectType<boolean>;
+export type ActiveState = NestedObjectType<boolean>;
+export type EditableState = NestedObjectType<boolean>;
+export type VisibleState = NestedObjectType<boolean>;
+
+export interface FormState {
+  values: ValuesState;
+  error: ErrorState;
+  touched: TouchedState;
+  active: ActiveState;
+  editable: EditableState;
+  visible: VisibleState;
+}
+
+export interface UseFormOptions {
   initialState?: FormState;
-  onReset?: (
-    values: Record<string, any>,
-    form: ReturnType<typeof useForm>
-  ) => void;
-  onSubmit?: (
-    values: Record<string, any>,
-    form: ReturnType<typeof useForm>
-  ) => Promise<any>;
-  validate?: (
-    values: Record<string, any>,
-    form: ReturnType<typeof useForm>
-  ) => Promise<Record<string, string> | null>;
+  onReset?: (values: ValuesState, form: UseForm) => void;
+  onSubmit?: (values: ValuesState, form: UseForm) => Promise<any>;
+  validate?: (values: ValuesState, form: UseForm) => Promise<ErrorState | null>;
   validateOnMount?: boolean;
   validateOnBlur?: boolean;
   validateOnChange?: boolean;
 }
 
-export type UseForm = {
-  [key: string]: any;
-};
-// export interface UseForm {
-//   dirty: boolean;
-//   submitting: boolean;
-//   validating: boolean;
-//   activeValues: Record<string, any>;
-//
-//   values: Record<string, any>;
-//   getFieldValue;
-//   setValues;
-//   setBatchValues;
-//   setFieldValue;
-//   deleteFieldValue;
-//
-//   touched: Record<string, any>;
-//   getFieldTouched;
-//   setTouched;
-//   setBatchTouched;
-//   setFieldTouched;
-//   deleteFieldTouched;
-//
-//   error: Record<string, any>;
-//   getFieldError;
-//   setError;
-//   setBatchError;
-//   setFieldError;
-//   deleteFieldError;
-//
-//   active: Record<string, any>;
-//   getFieldActive;
-//   setActive;
-//   setBatchActive;
-//   setFieldActive;
-//   deleteFieldActive;
-//
-//   editable: Record<string, any>;
-//   getFieldEditable;
-//   setEditable;
-//   setBatchEditable;
-//   setFieldEditable;
-//   deleteFieldEditable;
-//
-//   visible: Record<string, any>;
-//   getFieldVisible;
-//   setVisible;
-//   setBatchVisible;
-//   setFieldVisible;
-//   deleteFieldVisible;
-//
-//   reinitialize;
-//
-//   fields;
-//   getField;
-//   registerField;
-//   unregisterField;
-//
-//   execReset;
-//   execValidate;
-//   execSubmit;
-//
-//   handleValidate;
-//   handleReset;
-//   handleSubmit;
-//
-//   // 一些配置
-//   validateOnMount: boolean;
-//   validateOnBlur: boolean;
-//   validateOnChange: boolean;
-// }
+export interface UseForm {
+  dirty: boolean;
+  submitting: boolean;
+  validating: boolean;
+
+  activeValues: ValuesState;
+
+  values: ValuesState;
+  getFieldValue: (fieldPath: string) => any;
+  setValues: (values: ValuesState) => void;
+  setBatchValues: (values: ValuesState) => void;
+  setFieldValue: (fieldPath: string, value: any) => void;
+  deleteFieldValue: (fieldPath: string) => void;
+
+  touched: TouchedState;
+  getFieldTouched: (fieldPath: string) => boolean;
+  setTouched: (touched: TouchedState) => void;
+  setBatchTouched: (touched: TouchedState) => void;
+  setFieldTouched: (fieldPath: string, touched: boolean) => void;
+  deleteFieldTouched: (fieldPath: string) => void;
+
+  error: ErrorState;
+  getFieldError: (fieldPath: string) => string;
+  setError: (error: ErrorState) => void;
+  setBatchError: (error: ErrorState) => void;
+  setFieldError: (fieldPath: string, error: string) => void;
+  deleteFieldError: (fieldPath: string) => void;
+
+  active: ActiveState;
+  getFieldActive: (fieldPath: string) => boolean;
+  setActive: (active: ActiveState) => void;
+  setBatchActive: (active: ActiveState) => void;
+  setFieldActive: (
+    fieldPath: string,
+    active: boolean,
+    shouldRestore: boolean,
+    defaultValue: any
+  ) => void;
+  deleteFieldActive: (fieldPath: string) => void;
+
+  editable: EditableState;
+  getFieldEditable: (fieldPath: string) => boolean;
+  setEditable: (editable: EditableState) => void;
+  setBatchEditable: (editable: EditableState) => void;
+  setFieldEditable: (fieldPath: string, editable: boolean) => void;
+  deleteFieldEditable: (fieldPath: string) => void;
+
+  visible: VisibleState;
+  getFieldVisible: (fieldPath: string) => boolean;
+  setVisible: (visible: VisibleState) => void;
+  setBatchVisible: (visible: VisibleState) => void;
+  setFieldVisible: (fieldPath: string, visible: boolean) => void;
+  deleteFieldVisible: (fieldPath: string) => void;
+
+  reinitialize: (nextState: UseFormOptions['initialState']) => void;
+
+  fields: { [key: string]: UseField };
+  getField: (fieldPath: string) => UseField;
+  registerField: (fieldPath: string, field: UseField) => void;
+  unregisterField: (fieldPath: string) => void;
+
+  execReset: (values: FormState['values'], form: UseForm) => void;
+  execValidate: (values: FormState['values'], form: UseForm) => void;
+  execSubmit: (values: FormState['values'], form: UseForm) => Promise<any>;
+
+  handleValidate: () => ReturnType<UseForm['execValidate']>;
+  handleReset: () => ReturnType<UseForm['execReset']>;
+  handleSubmit: () => ReturnType<UseForm['execSubmit']>;
+
+  validateOnMount: boolean;
+  validateOnBlur: boolean;
+  validateOnChange: boolean;
+}
 
 const emptyState = () => ({});
 
-/**
- * useForm
- *
- * @param {Object} initialState 表单状态
- * @param onReset
- * @param onSubmit
- * @param validate
- * @param validateOnMount
- * @param validateOnBlur
- * @param validateOnChange
- * @returns {Object}
- */
 export default function useForm({
   initialState = {
     values: {},
@@ -139,16 +133,14 @@ export default function useForm({
     visible: {},
   },
 
-  /* eslint-disable no-unused-vars */
-  onReset = async (values, helpers) => {},
-  // eslint-disable-next-line
-  onSubmit = async (values, helpers) => {},
-  validate = async (values, helpers) => null,
-  /* eslint-enable no-unused-vars */
+  onReset = async (values, form) => {},
+  onSubmit = async (values, form) => {},
+  validate = async (values, form) => null,
+
   validateOnMount = true,
   validateOnBlur = true,
   validateOnChange = true,
-}: UseFormParams = {}): UseForm {
+}: UseFormOptions = {}): UseForm {
   const initialStateValue = unref(initialState);
   const valuesBag = useStateBag(initialStateValue.values || emptyState());
   const touchedBag = useStateBag(initialStateValue.touched || emptyState());
@@ -162,7 +154,7 @@ export default function useForm({
   const getFieldValue = valuesBag.getFieldState;
   const setValues = valuesBag.setState;
   const setBatchValues = valuesBag.setBatchState;
-  const setFieldValue = (fieldPath: FieldPath, value: any) => {
+  const setFieldValue = (fieldPath: string, value: any) => {
     valuesBag.setFieldState(fieldPath, value);
     touchedBag.setFieldState(fieldPath, true);
   };
@@ -192,7 +184,7 @@ export default function useForm({
 
   // 未激活的时候字段值设为默认
   const setFieldActive = (
-    fieldPath: FieldPath,
+    fieldPath: string,
     active: boolean,
     shouldRestore: boolean = true,
     defaultValue: any
@@ -220,7 +212,7 @@ export default function useForm({
   const setFieldVisible = visibleBag.setFieldState;
   const deleteFieldVisible = visibleBag.deleteFieldState;
 
-  const fields = ref<{ [key: string]: any }>({});
+  const fields = ref<{ [key: string]: UseField }>({});
 
   const submitting = ref(false);
   const validating = ref(false);
@@ -244,7 +236,9 @@ export default function useForm({
   // 所有 `active` 的表单值
   const activeValues = computed(() => {
     const curValues = valuesBag.getState();
-    return cloneNestedObject(curValues, (path) => getFieldActive(path));
+    return cloneNestedObject(curValues, (path) =>
+      getFieldActive(path.join('.'))
+    );
   });
 
   // 注册字段
@@ -266,7 +260,7 @@ export default function useForm({
 
   // 重置表单状态
   const reinitialize = (
-    nextState: UseFormParams['initialState'] = {
+    nextState: UseFormOptions['initialState'] = {
       values: {},
       error: {},
       touched: {},
@@ -446,9 +440,8 @@ export const useFormProvide = (form: UseForm) => {
   provide(FORM_CONTEXT, form);
 };
 
-function useStateBag<T extends object>(rawInitialState: T) {
+function useStateBag<T extends NestedObjectType<any>>(rawInitialState: T) {
   let initialState = cloneDeep(rawInitialState);
-
   const getInitialState = () => initialState;
   const getClonedInitialState = () => cloneDeep(initialState);
   const setInitialState = (nextInitialState: T) => {
@@ -456,21 +449,20 @@ function useStateBag<T extends object>(rawInitialState: T) {
   };
 
   const state = ref(getClonedInitialState());
-  const getState = () => state.value as T;
+  const getState = () => state.value;
   const setState = (nextState: T) => {
     state.value = nextState;
   };
-  const setBatchState = (nextState: T) => {
-    Object.assign(state.value, nextState);
-  };
-  const setFieldState = (fieldPath: FieldPath, nextState: any) => {
+
+  const setBatchState = (nextState: T) => Object.assign(state.value, nextState);
+  const setFieldState = (fieldPath: string, nextState: any) => {
     $set(state.value, fieldPath, nextState);
   };
-  const deleteFieldState = (fieldPath: FieldPath) => {
+  const deleteFieldState = (fieldPath: string) => {
     $delete(state.value, fieldPath);
   };
 
-  const getFieldState = (fieldPath: FieldPath) => get(state.value, fieldPath);
+  const getFieldState = (fieldPath: string) => get(state.value, fieldPath);
 
   return {
     state,

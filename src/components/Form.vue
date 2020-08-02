@@ -6,16 +6,16 @@
 
 <script lang="ts">
 import { defineComponent } from '@vue/composition-api';
-import useForm, { useFormProvide, UseFormParams } from '../hooks/useForm';
+import useForm, { useFormProvide, UseFormOptions } from '../hooks/useForm';
 
 export default defineComponent({
   props: {
     initialState: {
-      type: Object as () => UseFormParams['initialState'],
+      type: Object as () => UseFormOptions['initialState'],
     },
-    onReset: (Function as unknown) as () => UseFormParams['onReset'],
-    onSubmit: (Function as unknown) as () => UseFormParams['onSubmit'],
-    validate: (Function as unknown) as () => UseFormParams['validate'],
+    onReset: (Function as unknown) as () => UseFormOptions['onReset'],
+    onSubmit: (Function as unknown) as () => UseFormOptions['onSubmit'],
+    validate: (Function as unknown) as () => UseFormOptions['validate'],
     validateOnMount: Boolean,
     validateOnBlur: Boolean,
     validateOnChange: Boolean,

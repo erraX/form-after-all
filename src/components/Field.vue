@@ -14,8 +14,14 @@ export default defineComponent({
       type: String,
       required: true,
     },
-    restoreWhenBecomeInactive: Boolean,
-    initialTouched: Boolean,
+    restoreWhenBecomeInactive: {
+      type: Boolean,
+      default: undefined,
+    },
+    initialTouched: {
+      type: Boolean,
+      default: undefined,
+    },
     initialError: String,
     defaultValue: null,
     activeWhen: (Function as unknown) as () => UseFieldOptions['activeWhen'],

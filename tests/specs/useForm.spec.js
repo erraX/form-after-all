@@ -41,7 +41,7 @@ describe('useForm', () => {
       expect(form.visible).toEqual({ foo: true, bar: true });
     });
 
-    it('should reinitialize active, `restoreWhenBecomeInactive` should work', () => {
+    it.only('should reinitialize active, `restoreWhenBecomeInactive` should work', () => {
       const { form } = createFormWrapper({
         formProps: {
           initialState: {

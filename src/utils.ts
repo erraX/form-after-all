@@ -68,7 +68,7 @@ export const $set = (obj: any, path: string | string[], value?: any) => {
 export function setNestedObjectValues<T>(
   object: any,
   value: any,
-  visited: any = new WeakMap(),
+  visited: WeakMap<object, boolean> = new WeakMap(),
   response: any = {}
 ): T {
   for (let k of Object.keys(object)) {
@@ -91,12 +91,12 @@ export function getNestedKeys(
   object: any,
   visited: any = new WeakMap(),
   next: any = {},
-  paths: any[] = [],
-  result: any[] = []
-): any {
+  paths: string[] = [],
+  result: string[][] = []
+): string[][] {
   for (let k of Object.keys(object)) {
     const val = object[k];
-    const currentPaths = [].concat(paths as any, k as any);
+    const currentPaths = paths.concat(k);
     if (isObject(val)) {
       if (!visited.get(val)) {
         visited.set(val, true);

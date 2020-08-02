@@ -18,17 +18,33 @@ export interface UseFieldOptions {
   restoreWhenBecomeInactive?: boolean;
 }
 
-/**
- * 创建一个字段
- *
- * @param {string} fieldPath 字段key
- * @param initialState
- * @param restoreWhenBecomeInactive
- * @param defaultValue
- * @param activeWhen
- * @param editableWhen
- * @param visibleWhen
- */
+export interface UseField {
+  value: any;
+  setValue: (value: any) => void;
+
+  touched: boolean;
+  setTouched: (touched: boolean) => void;
+
+  error: string;
+  setError: (error: string) => void;
+
+  active: boolean;
+  setActive: (
+    active: boolean,
+    shouldRestore?: boolean,
+    curDefaultValue?: any
+  ) => void;
+
+  editable: boolean;
+  setEditable: (editable: boolean) => void;
+
+  visible: boolean;
+  setVisible: (visible: boolean) => void;
+
+  destroy: () => void;
+  reinitialize: () => void;
+}
+
 export default function useField(
   fieldPath: string,
   {
@@ -40,7 +56,7 @@ export default function useField(
     defaultValue,
     restoreWhenBecomeInactive = true,
   }: UseFieldOptions = {}
-) {
+): UseField {
   if (!fieldPath) {
     throw new Error('`fieldPath` is missing when register a field.');
   }
@@ -63,23 +79,23 @@ export default function useField(
   // value
   const value = computed(() => get(form.values, fieldPath));
   const setValue = (nextValue: any) => {
-    form.setFieldValue(fieldPath, nextValue);
+    form.setFieldValue(fieldPath, nextValue as any);
   };
 
   // touched
-  const touched = computed(() => get(form.touched, fieldPath));
+  const touched = computed(() => get(form.touched, fieldPath) as boolean);
   const setTouched = (touched: boolean) => {
     form.setFieldTouched(fieldPath, touched);
   };
 
   // error
-  const error = computed(() => get(form.error, fieldPath));
+  const error = computed(() => get(form.error, fieldPath) as string);
   const setError = (error: string) => {
     form.setFieldError(fieldPath, error);
   };
 
   // active
-  const active = computed(() => get(form.active, fieldPath));
+  const active = computed(() => get(form.active, fieldPath) as boolean);
   const setActive = (
     active: boolean,
     shouldRestore = restoreWhenBecomeInactive,
@@ -89,13 +105,13 @@ export default function useField(
   };
 
   // editable
-  const editable = computed(() => get(form.editable, fieldPath));
+  const editable = computed(() => get(form.editable, fieldPath) as boolean);
   const setEditable = (editable: boolean) => {
     form.setFieldEditable(fieldPath, editable);
   };
 
   // visible
-  const visible = computed(() => get(form.visible, fieldPath));
+  const visible = computed(() => get(form.visible, fieldPath) as boolean);
   const setVisible = (visible: boolean) => {
     form.setFieldVisible(fieldPath, visible);
   };

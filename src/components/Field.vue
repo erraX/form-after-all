@@ -4,42 +4,28 @@
   </div>
 </template>
 
-<script>
-import useField from '../hooks/useField';
+<script lang="ts">
+import { defineComponent } from '@vue/composition-api';
+import useField, { UseFieldOptions } from '../hooks/useField';
 
-export default {
+export default defineComponent({
   props: {
     fieldPath: {
       type: String,
       required: true,
     },
-    restoreWhenBecomeInactive: {
-      type: Boolean,
-      default: true,
-    },
+    restoreWhenBecomeInactive: Boolean,
     initialTouched: Boolean,
     initialError: String,
-    defaultValue: {
-      type: null,
-      default: undefined,
-    },
-    activeWhen: {
-      type: Function,
-      default: null,
-    },
-    visibleWhen: {
-      type: Function,
-      default: null,
-    },
-    editableWhen: {
-      type: Function,
-      default: null,
-    },
+    defaultValue: null,
+    activeWhen: (Function as unknown) as () => UseFieldOptions['activeWhen'],
+    visibleWhen: (Function as unknown) as () => UseFieldOptions['visibleWhen'],
+    editableWhen: (Function as unknown) as () => UseFieldOptions['editableWhen'],
   },
 
   setup(props) {
     const field = useField(props.fieldPath, props);
     return { field };
   },
-};
+});
 </script>

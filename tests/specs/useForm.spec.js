@@ -137,7 +137,7 @@ describe('useForm', () => {
   });
 
   describe('useForm#activeValues', () => {
-    it('should without field which is inactive', () => {
+    it('should without flat inactive value', () => {
       const { form } = createFormWrapper({
         formProps: {
           initialState: {
@@ -151,12 +151,59 @@ describe('useForm', () => {
             },
           },
         },
-        fields: [{ fieldPath: 'foo' }, { fieldPath: 'bar' }],
+        fields: [],
       });
       expect(form.activeValues).toEqual({ foo: 'foo' });
     });
 
-    it('should remove value in array field which is inactive', () => {
+    it('should without nested inactive value', () => {
+      const { form } = createFormWrapper({
+        formProps: {
+          initialState: {
+            values: {
+              a: { b: 1 },
+            },
+            active: {
+              a: { b: false },
+            },
+          },
+        },
+        fields: [],
+      });
+      expect(form.activeValues).toEqual({});
+    });
+
+    it('should without nested inactive array value', () => {
+      const { form } = createFormWrapper({
+        formProps: {
+          initialState: {
+            values: {
+              a: {
+                b: 'b',
+                foo: [
+                  { nested1: 'nested1', bar: 'bar' },
+                  { nested2: 'nested2' },
+                ],
+              },
+            },
+            active: {
+              a: {
+                b: false,
+                foo: [{ nested1: true, bar: false }, { nested2: false }],
+              },
+            },
+          },
+        },
+        fields: [],
+      });
+      expect(form.activeValues).toEqual({
+        a: {
+          foo: [{ nested1: 'nested1' }],
+        },
+      });
+    });
+
+    it('should without nested inactive array value', () => {
       const { form } = createFormWrapper({
         formProps: {
           initialState: {
@@ -164,17 +211,13 @@ describe('useForm', () => {
               arr: [1, 2, 3],
             },
             active: {
-              arr: [true, true, false],
+              arr: [true, false, true],
             },
           },
         },
-        fields: [
-          { fieldPath: 'arr[0]' },
-          { fieldPath: 'arr[1]' },
-          { fieldPath: 'arr[2]' },
-        ],
+        fields: [],
       });
-      expect(form.activeValues).toEqual({ arr: [1, 2] });
+      expect(form.activeValues).toEqual({ arr: [1, undefined, 3] });
     });
   });
 

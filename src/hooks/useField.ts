@@ -4,22 +4,19 @@ import {
   computed,
   onUnmounted,
   watchEffect,
+  WatchStopHandle,
 } from '@vue/composition-api';
 import { useFormInject } from './useForm';
 
-/**
- * `useField` 用到的配置选项，用于给 `Field` 过滤 `props`
- *
- * @type {string[]}
- */
-export const useFieldProps = [
-  'activeWhen',
-  'visibleWhen',
-  'editableWhen',
-  'clearWhen',
-  'defaultValue',
-  'restoreWhenBecomeInactive',
-];
+export interface UseFieldOptions {
+  initialTouched?: boolean;
+  initialError?: string;
+  activeWhen?: () => boolean;
+  visibleWhen?: () => boolean;
+  editableWhen?: () => boolean;
+  defaultValue?: () => boolean;
+  restoreWhenBecomeInactive?: boolean;
+}
 
 /**
  * 创建一个字段
@@ -33,7 +30,7 @@ export const useFieldProps = [
  * @param visibleWhen
  */
 export default function useField(
-  fieldPath,
+  fieldPath: string,
   {
     initialTouched = false,
     initialError = '',
@@ -42,7 +39,7 @@ export default function useField(
     editableWhen,
     defaultValue,
     restoreWhenBecomeInactive = true,
-  } = {}
+  }: UseFieldOptions = {}
 ) {
   if (!fieldPath) {
     throw new Error('`fieldPath` is missing when register a field.');
@@ -65,26 +62,26 @@ export default function useField(
 
   // value
   const value = computed(() => get(form.values, fieldPath));
-  const setValue = (nextValue) => {
+  const setValue = (nextValue: any) => {
     form.setFieldValue(fieldPath, nextValue);
   };
 
   // touched
   const touched = computed(() => get(form.touched, fieldPath));
-  const setTouched = (touched) => {
+  const setTouched = (touched: boolean) => {
     form.setFieldTouched(fieldPath, touched);
   };
 
   // error
   const error = computed(() => get(form.error, fieldPath));
-  const setError = (error) => {
+  const setError = (error: string) => {
     form.setFieldError(fieldPath, error);
   };
 
   // active
   const active = computed(() => get(form.active, fieldPath));
   const setActive = (
-    active,
+    active: boolean,
     shouldRestore = restoreWhenBecomeInactive,
     curDefaultValue = defaultValue
   ) => {
@@ -93,51 +90,35 @@ export default function useField(
 
   // editable
   const editable = computed(() => get(form.editable, fieldPath));
-  const setEditable = (editable) => {
+  const setEditable = (editable: boolean) => {
     form.setFieldEditable(fieldPath, editable);
   };
 
   // visible
   const visible = computed(() => get(form.visible, fieldPath));
-  const setVisible = (visible) => {
+  const setVisible = (visible: boolean) => {
     form.setFieldVisible(fieldPath, visible);
-  };
-
-  const handleInput = (value) => {
-    setValue(value);
-  };
-
-  const handleChange = (value) => {
-    setValue(value);
-  };
-
-  const handleInputChange = (e) => {
-    setValue(e.target.value);
-  };
-
-  const handleBlur = () => {
-    setTouched(true);
   };
 
   onUnmounted(() => {
     form.unregisterField(fieldPath);
   });
 
-  let stopWatchActive = null;
+  let stopWatchActive: WatchStopHandle | null = null;
   if (activeWhen) {
     stopWatchActive = watchEffect(() => {
       setActive(!!activeWhen(), restoreWhenBecomeInactive, defaultValue);
     });
   }
 
-  let stopWatchEditable = null;
+  let stopWatchEditable: WatchStopHandle | null = null;
   if (editableWhen) {
     stopWatchEditable = watchEffect(() => {
       setEditable(!!editableWhen());
     });
   }
 
-  let stopWatchVisible = null;
+  let stopWatchVisible: WatchStopHandle | null = null;
   if (visibleWhen) {
     stopWatchVisible = watchEffect(() => {
       setVisible(!!visibleWhen());
@@ -195,11 +176,6 @@ export default function useField(
 
     destroy,
     reinitialize,
-
-    handleInput,
-    handleChange,
-    handleInputChange,
-    handleBlur,
   });
 
   form.registerField(fieldPath, field);

@@ -1,15 +1,8 @@
 import Vue from 'vue';
-// import { isEmpty, get, toPath } from 'lodash-es';
-import { toPath } from 'lodash-es';
-import { isRef } from '@vue/composition-api';
+import { set, get, toPath, isObject } from 'lodash-es';
 
 // environment is development or not
 export const isDev: boolean = process.env.NODE_ENV === 'development';
-
-/**
- * unwrap `Ref` type value
- */
-export const unref = (value: any): any => (isRef(value) ? value.value : value);
 
 export const isInteger = (obj: any): boolean =>
   String(Math.floor(Number(obj))) === obj;
@@ -29,7 +22,11 @@ export const $delete = (obj: any, path: string | string[]) => {
   }
 
   currentPath = pathArray[i];
-  Vue.delete(result, currentPath);
+  if (Array.isArray(result)) {
+    result.splice(currentPath as any, 1);
+  } else {
+    Vue.delete(result, currentPath);
+  }
 };
 
 export const $set = (obj: any, path: string | string[], value?: any) => {
@@ -67,3 +64,65 @@ export const $set = (obj: any, path: string | string[], value?: any) => {
     }
   }
 };
+
+export function setNestedObjectValues<T>(
+  object: any,
+  value: any,
+  visited: any = new WeakMap(),
+  response: any = {}
+): T {
+  for (let k of Object.keys(object)) {
+    const val = object[k];
+    if (isObject(val)) {
+      if (!visited.get(val)) {
+        visited.set(val, true);
+        response[k] = Array.isArray(val) ? [] : {};
+        setNestedObjectValues(val, value, visited, response[k]);
+      }
+    } else {
+      response[k] = value;
+    }
+  }
+
+  return response;
+}
+
+export function getNestedKeys(
+  object: any,
+  visited: any = new WeakMap(),
+  next: any = {},
+  paths: any[] = [],
+  result: any[] = []
+): any {
+  for (let k of Object.keys(object)) {
+    const val = object[k];
+    const currentPaths = [].concat(paths as any, k as any);
+    if (isObject(val)) {
+      if (!visited.get(val)) {
+        visited.set(val, true);
+        next[k] = Array.isArray(val) ? [] : {};
+        getNestedKeys(val, visited, next, currentPaths, result);
+      }
+    } else {
+      result.push(currentPaths);
+    }
+  }
+
+  return result;
+}
+
+export function cloneNestedObject(
+  object: any,
+  cloneIf: (path: string[]) => boolean = () => true
+): any {
+  const result = {};
+  const paths = getNestedKeys(object);
+
+  for (let path of paths) {
+    if (cloneIf(path)) {
+      set(result, path, get(object, path));
+    }
+  }
+
+  return result;
+}

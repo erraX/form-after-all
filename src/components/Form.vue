@@ -4,40 +4,21 @@
   </div>
 </template>
 
-<script>
-import { noop } from 'lodash-es';
-import useForm, { useFormProvide } from '../hooks/useForm';
+<script lang="ts">
+import { defineComponent } from '@vue/composition-api';
+import useForm, { useFormProvide, UseFormParams } from '../hooks/useForm';
 
-export default {
+export default defineComponent({
   props: {
     initialState: {
-      type: Object,
-      default: () => ({}),
+      type: Object as () => UseFormParams['initialState'],
     },
-    onReset: {
-      type: Function,
-      default: () => noop,
-    },
-    onSubmit: {
-      type: Function,
-      default: () => noop,
-    },
-    validate: {
-      type: Function,
-      default: () => () => true,
-    },
-    validateOnMount: {
-      type: Boolean,
-      default: false,
-    },
-    validateOnBlur: {
-      type: Boolean,
-      default: true,
-    },
-    validateOnChange: {
-      type: Boolean,
-      default: true,
-    },
+    onReset: (Function as unknown) as () => UseFormParams['onReset'],
+    onSubmit: (Function as unknown) as () => UseFormParams['onSubmit'],
+    validate: (Function as unknown) as () => UseFormParams['validate'],
+    validateOnMount: Boolean,
+    validateOnBlur: Boolean,
+    validateOnChange: Boolean,
   },
 
   setup(props) {
@@ -45,5 +26,5 @@ export default {
     useFormProvide(form);
     return { form };
   },
-};
+});
 </script>

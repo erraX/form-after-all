@@ -3,13 +3,117 @@ import {
   ref,
   isRef,
   watch,
+  unref,
   inject,
   provide,
   reactive,
   computed,
+  InjectionKey,
 } from '@vue/composition-api';
-import { get, each, last, isEqual, isEmpty, cloneDeep } from 'lodash-es';
-import { unref, $set, $delete, isDev } from '../utils';
+import { get, each, isEqual, isEmpty, cloneDeep } from 'lodash-es';
+import { $set, $delete, cloneNestedObject, isDev } from '../utils';
+
+export type FieldPath = string | string[];
+
+export interface FormState {
+  values: Record<string, any>;
+  error: Record<string, any>;
+  touched: Record<string, any>;
+  active: Record<string, any>;
+  editable: Record<string, any>;
+  visible: Record<string, any>;
+}
+
+export interface UseFormParams {
+  initialState?: FormState;
+  onReset?: (
+    values: Record<string, any>,
+    form: ReturnType<typeof useForm>
+  ) => void;
+  onSubmit?: (
+    values: Record<string, any>,
+    form: ReturnType<typeof useForm>
+  ) => Promise<any>;
+  validate?: (
+    values: Record<string, any>,
+    form: ReturnType<typeof useForm>
+  ) => Promise<Record<string, string> | null>;
+  validateOnMount?: boolean;
+  validateOnBlur?: boolean;
+  validateOnChange?: boolean;
+}
+
+export type UseForm = {
+  [key: string]: any;
+};
+// export interface UseForm {
+//   dirty: boolean;
+//   submitting: boolean;
+//   validating: boolean;
+//   activeValues: Record<string, any>;
+//
+//   values: Record<string, any>;
+//   getFieldValue;
+//   setValues;
+//   setBatchValues;
+//   setFieldValue;
+//   deleteFieldValue;
+//
+//   touched: Record<string, any>;
+//   getFieldTouched;
+//   setTouched;
+//   setBatchTouched;
+//   setFieldTouched;
+//   deleteFieldTouched;
+//
+//   error: Record<string, any>;
+//   getFieldError;
+//   setError;
+//   setBatchError;
+//   setFieldError;
+//   deleteFieldError;
+//
+//   active: Record<string, any>;
+//   getFieldActive;
+//   setActive;
+//   setBatchActive;
+//   setFieldActive;
+//   deleteFieldActive;
+//
+//   editable: Record<string, any>;
+//   getFieldEditable;
+//   setEditable;
+//   setBatchEditable;
+//   setFieldEditable;
+//   deleteFieldEditable;
+//
+//   visible: Record<string, any>;
+//   getFieldVisible;
+//   setVisible;
+//   setBatchVisible;
+//   setFieldVisible;
+//   deleteFieldVisible;
+//
+//   reinitialize;
+//
+//   fields;
+//   getField;
+//   registerField;
+//   unregisterField;
+//
+//   execReset;
+//   execValidate;
+//   execSubmit;
+//
+//   handleValidate;
+//   handleReset;
+//   handleSubmit;
+//
+//   // 一些配置
+//   validateOnMount: boolean;
+//   validateOnBlur: boolean;
+//   validateOnChange: boolean;
+// }
 
 const emptyState = () => ({});
 
@@ -26,7 +130,14 @@ const emptyState = () => ({});
  * @returns {Object}
  */
 export default function useForm({
-  initialState = {},
+  initialState = {
+    values: {},
+    error: {},
+    touched: {},
+    active: {},
+    editable: {},
+    visible: {},
+  },
 
   /* eslint-disable no-unused-vars */
   onReset = async (values, helpers) => {},
@@ -37,7 +148,7 @@ export default function useForm({
   validateOnMount = true,
   validateOnBlur = true,
   validateOnChange = true,
-} = {}) {
+}: UseFormParams = {}): UseForm {
   const initialStateValue = unref(initialState);
   const valuesBag = useStateBag(initialStateValue.values || emptyState());
   const touchedBag = useStateBag(initialStateValue.touched || emptyState());
@@ -51,7 +162,7 @@ export default function useForm({
   const getFieldValue = valuesBag.getFieldState;
   const setValues = valuesBag.setState;
   const setBatchValues = valuesBag.setBatchState;
-  const setFieldValue = (fieldPath, value) => {
+  const setFieldValue = (fieldPath: FieldPath, value: any) => {
     valuesBag.setFieldState(fieldPath, value);
     touchedBag.setFieldState(fieldPath, true);
   };
@@ -81,10 +192,10 @@ export default function useForm({
 
   // 未激活的时候字段值设为默认
   const setFieldActive = (
-    fieldPath,
-    active,
-    shouldRestore = true,
-    defaultValue
+    fieldPath: FieldPath,
+    active: boolean,
+    shouldRestore: boolean = true,
+    defaultValue: any
   ) => {
     activeBag.setFieldState(fieldPath, active);
     if (!active && shouldRestore) {
@@ -109,7 +220,7 @@ export default function useForm({
   const setFieldVisible = visibleBag.setFieldState;
   const deleteFieldVisible = visibleBag.deleteFieldState;
 
-  const fields = ref({});
+  const fields = ref<{ [key: string]: any }>({});
 
   const submitting = ref(false);
   const validating = ref(false);
@@ -132,55 +243,17 @@ export default function useForm({
 
   // 所有 `active` 的表单值
   const activeValues = computed(() => {
-    const curValues = cloneDeep(valuesBag.getState());
-
-    // TODO: retrieve active state by `form.active`
-    each(fields.value, (field, fieldPath) => {
-      if (field.active !== false) {
-        return;
-      }
-
-      // 先把字段的值删除了
-      $delete(curValues, fieldPath);
-
-      // 路径中包含数组，数组中所有状态都是 `inactive` 则删除空的元素
-      // delete fieldPath `a.b[0].foo`
-      //    { a: { b: [{ foo: true }] } }
-      // => { a: { b: [{}] } }
-      if (!isDeepPath(fieldPath)) {
-        return;
-      }
-
-      // ['a', 'b[0]', 'foo'] => ['a', 'b[0]']
-      const paths = fieldPath.split('.');
-      paths.pop();
-
-      // key: 'b', index: '0'
-      const { key, index } = matchArrayKeyIndex(paths);
-      if (key === undefined) {
-        return;
-      }
-
-      // ['a', 'b[0]'] => ['a', 'b']
-      paths[paths.length - 1] = key;
-
-      // [{}]
-      const array = get(curValues, paths);
-      if (isEmpty(array[index])) {
-        array.splice(index, 1);
-      }
-    });
-
-    return curValues;
+    const curValues = valuesBag.getState();
+    return cloneNestedObject(curValues, (path) => getFieldActive(path));
   });
 
   // 注册字段
-  const registerField = (fieldPath, field) => {
+  const registerField = (fieldPath: string, field: any) => {
     Vue.set(fields.value, fieldPath, field);
   };
 
   // 注销字段
-  const unregisterField = (fieldPath) => {
+  const unregisterField = (fieldPath: string) => {
     const field = fields.value[fieldPath];
     if (!field) {
       return;
@@ -189,10 +262,19 @@ export default function useForm({
   };
 
   // 获取字段
-  const getField = (fieldPath) => fields.value[fieldPath];
+  const getField = (fieldPath: string) => fields.value[fieldPath];
 
   // 重置表单状态
-  const reinitialize = (nextState = {}) => {
+  const reinitialize = (
+    nextState: UseFormParams['initialState'] = {
+      values: {},
+      error: {},
+      touched: {},
+      active: {},
+      editable: {},
+      visible: {},
+    }
+  ) => {
     nextState.values && valuesBag.setInitialState(nextState.values);
     valuesBag.state.value = valuesBag.getClonedInitialState();
 
@@ -216,7 +298,7 @@ export default function useForm({
     });
   };
 
-  const execValidate = async (values, form) => {
+  const execValidate = async (values: FormState['values'], form: UseForm) => {
     validating.value = true;
     try {
       const error = await validate(values, form);
@@ -236,7 +318,7 @@ export default function useForm({
     execValidate(cloneDeep(activeValues.value), form);
 
   // 提交表单数据
-  const execSubmit = async (values, form) => {
+  const execSubmit = async (values: FormState['values'], form: UseForm) => {
     submitting.value = true;
 
     // TODO: set all campaignFormFields touched
@@ -261,15 +343,18 @@ export default function useForm({
   const handleSubmit = () => execSubmit(cloneDeep(activeValues.value), form);
 
   // 重置表单状态
-  const execReset = (values, form) => {
+  const execReset = (
+    values: FormState['values'],
+    form: ReturnType<typeof useForm>
+  ) => {
     const nextState = onReset(values, form);
-    reinitialize(nextState);
+    reinitialize(nextState as any);
   };
   const handleReset = () => execReset(valuesBag.getState(), form);
 
   if (isRef(initialState)) {
     watch(initialState, (nextState) => {
-      reinitialize(nextState);
+      reinitialize(nextState as any);
     });
   }
 
@@ -345,7 +430,7 @@ export default function useForm({
   return form;
 }
 
-export const FORM_CONTEXT = Symbol('FORM_CONTEXT');
+export const FORM_CONTEXT: InjectionKey<UseForm> = Symbol('FORM_CONTEXT');
 
 export const useFormInject = () => {
   const form = inject(FORM_CONTEXT);
@@ -357,36 +442,35 @@ export const useFormInject = () => {
   return form;
 };
 
-export const useFormProvide = (form) => {
+export const useFormProvide = (form: UseForm) => {
   provide(FORM_CONTEXT, form);
 };
 
-// eslint-disable-next-line func-style
-function useStateBag(rawInitialState) {
+function useStateBag<T extends object>(rawInitialState: T) {
   let initialState = cloneDeep(rawInitialState);
 
   const getInitialState = () => initialState;
   const getClonedInitialState = () => cloneDeep(initialState);
-  const setInitialState = (nextInitialState) => {
+  const setInitialState = (nextInitialState: T) => {
     initialState = nextInitialState;
   };
 
   const state = ref(getClonedInitialState());
-  const getState = () => state.value;
-  const setState = (nextState) => {
+  const getState = () => state.value as T;
+  const setState = (nextState: T) => {
     state.value = nextState;
   };
-  const setBatchState = (nextState) => {
+  const setBatchState = (nextState: T) => {
     Object.assign(state.value, nextState);
   };
-  const setFieldState = (fieldPath, nextState) => {
+  const setFieldState = (fieldPath: FieldPath, nextState: any) => {
     $set(state.value, fieldPath, nextState);
   };
-  const deleteFieldState = (fieldPath) => {
+  const deleteFieldState = (fieldPath: FieldPath) => {
     $delete(state.value, fieldPath);
   };
 
-  const getFieldState = (fieldPath) => get(state.value, fieldPath);
+  const getFieldState = (fieldPath: FieldPath) => get(state.value, fieldPath);
 
   return {
     state,
@@ -402,19 +486,4 @@ function useStateBag(rawInitialState) {
 
     deleteFieldState,
   };
-}
-
-// eslint-disable-next-line func-style
-function isDeepPath(paths) {
-  return paths.split('.').length > 1;
-}
-
-// eslint-disable-next-line func-style
-function matchArrayKeyIndex(paths) {
-  // b[0]
-  const maybeArrayPath = last(paths);
-
-  // 'b[0]' => ['b', '0']
-  const matched = maybeArrayPath.match(/(.+)\[(.+)]/);
-  return matched ? { key: matched[1], index: matched[2] } : {};
 }
